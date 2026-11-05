@@ -1,0 +1,15 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot - XtonFlowBackendApplication",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/xton-flow-backend",
+            "mainClass": "com.xton.flow.XtonFlowBackendApplication",
+            "args": "",
+            "envFile": "${workspaceFolder}/xton-flow-backend/.env",
+            "console": "integratedTerminal",
+            "timeout": 60000
+        }
+    ]
+}
