@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import { getStoredUser, persistStoredUser } from './utils/authStorage';
+import ThemeToggle from './components/ThemeToggle';
 
 function PrivateRoute({ children }) {
   const [status, setStatus] = useState(getStoredUser() ? 'ready' : 'loading');
@@ -23,13 +24,14 @@ function PrivateRoute({ children }) {
       .catch(() => setStatus('unauthenticated'));
   }, [status]);
 
-  if (status === 'loading') return <div className="min-h-screen bg-gray-950" />;
+  if (status === 'loading') return <div className="min-h-screen bg-[var(--bg)]" />;
   return status === 'ready' ? children : <Navigate to="/login" replace />;
 }
 
 function App() {
   return (
     <Router>
+      <ThemeToggle />
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />

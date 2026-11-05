@@ -48,6 +48,7 @@ public class TaskService {
                 .status(status)
                 .priority(priority)
                 .dueDate(dto.getDueDate())
+                .startDate(dto.getStartDate())
                 .labelColor(dto.getLabelColor())
                 .coverColor(dto.getCoverColor())
                 .board(board)
@@ -89,6 +90,7 @@ public class TaskService {
         if (dto.getDescription() != null) existingTask.setDescription(dto.getDescription());
         if (dto.getStatus() != null) existingTask.setStatus(dto.getStatus());
         if (dto.getPriority() != null) existingTask.setPriority(dto.getPriority());
+        if (dto.isStartDatePresent()) existingTask.setStartDate(dto.getStartDate());
 
         if (dto.getAssigneeId() != null) {
             if (dto.getAssigneeId().isEmpty()) {

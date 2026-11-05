@@ -21,14 +21,14 @@ const COVER_COLORS = [
   { value: 'bg-purple-400', label: 'Purple' },
   { value: 'bg-pink-400', label: 'Pink' },
   { value: 'bg-gray-400', label: 'Gray' },
-  { value: '', label: 'None' },
+  { value: '', label: 'None', swatch: 'border border-[var(--border-strong)]' },
 ];
 
 function isOverdue(dueDate) {
   return dueDate && new Date(dueDate) < new Date();
 }
 
-function formatDate(dt) {
+function formatPillDate(dt) {
   if (!dt) return '';
   return new Date(dt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -52,6 +52,7 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
   const [titleDraft, setTitleDraft] = useState(task.title);
   const [editingDesc, setEditingDesc] = useState(false);
   const [descDraft, setDescDraft] = useState(task.description || '');
+  const [startDateDraft, setStartDateDraft] = useState(task.startDate || '');
   const [dueDateDraft, setDueDateDraft] = useState(
     task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 16) : ''
   );
@@ -84,6 +85,7 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
 
   const saveTitle = () => { setEditingTitle(false); if (titleDraft.trim() && titleDraft !== task.title) patchTask({ title: titleDraft }); };
   const saveDesc = () => { setEditingDesc(false); patchTask({ description: descDraft }); };
+  const saveStartDate = (val) => { setStartDateDraft(val); patchTask({ startDate: val || null }); };
   const saveDueDate = (val) => { setDueDateDraft(val); patchTask({ dueDate: val || null }); };
 
   const handleAddComment = async (e) => {
@@ -174,18 +176,18 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
   const labelColor = LABEL_COLORS.find(l => l.value === task.labelColor);
 
   const tabs = [
-    { id: 'checklist', label: `Checklist${checklist.length ? ` (${checkedCount}/${checklist.length})` : ''}` },
-    { id: 'comments', label: `Comments${comments.length ? ` (${comments.length})` : ''}` },
-    { id: 'attachments', label: `Files${attachments.length ? ` (${attachments.length})` : ''}` },
+    { id: 'checklist', label: `Checklist${checklist.length ? ` (${checkedCount}/${checklist.length})` : ''}`, icon: 'fa-solid fa-list-check' },
+    { id: 'comments', label: `Comments${comments.length ? ` (${comments.length})` : ''}`, icon: 'fa-regular fa-comment' },
+    { id: 'attachments', label: `Files${attachments.length ? ` (${attachments.length})` : ''}`, icon: 'fa-solid fa-paperclip' },
   ];
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-start justify-center z-50 p-4 overflow-y-auto">
-      <div className="task-detail-modal bg-white dark:bg-gray-800 rounded-xl w-full max-w-5xl my-4 shadow-2xl flex flex-col">
+    <div className="overlay !items-start overflow-y-auto">
+      <div className="task-detail-modal modal-surface w-full max-w-5xl my-4 flex flex-col animate-scale-in">
 
         {/* Cover */}
         {task.coverColor && (
-          <div className={`${task.coverColor} h-24 rounded-t-xl`} />
+          <div className={`${task.coverColor} h-20 rounded-t-[18px]`} />
         )}
 
         {/* Header */}
@@ -193,26 +195,34 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
           {/* Label */}
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             {labelColor?.value && (
-              <span className={`${labelColor.bg} text-white text-xs px-3 py-0.5 rounded-full font-medium`}>
+              <span className={`${labelColor.bg} text-white pill !py-1 !px-3`}>
                 {labelColor.name}
               </span>
             )}
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              task.priority === 'URGENT' ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' :
-              task.priority === 'HIGH' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' :
-              task.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' :
-              'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+            <span className={`pill !py-1 ${
+              task.priority === 'URGENT' ? 'bg-rose-500/12 text-rose-600 dark:text-rose-300' :
+              task.priority === 'HIGH' ? 'bg-orange-500/12 text-orange-600 dark:text-orange-300' :
+              task.priority === 'MEDIUM' ? 'bg-yellow-500/12 text-yellow-600 dark:text-yellow-300' :
+              'bg-emerald-500/12 text-emerald-600 dark:text-emerald-300'
             }`}>{task.priority}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+            <span className="pill !py-1 bg-[var(--surface-3)] text-[var(--text-muted)]">
+              <i className="fa-solid fa-circle-dot !text-[9px]" />
               {task.status.replace('_', ' ')}
             </span>
+            {task.startDate && (
+              <span className="pill !py-1 bg-violet-500/10 text-violet-600 dark:text-violet-300">
+                <i className="fa-solid fa-play !text-[9px]" />
+                Starts {formatPillDate(task.startDate)}
+              </span>
+            )}
             {task.dueDate && (
-              <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${
+              <span className={`pill !py-1 ${
                 overdue
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
-                  : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+                  ? 'bg-rose-500/12 text-rose-600 dark:text-rose-300'
+                  : 'bg-sky-500/12 text-sky-600 dark:text-sky-300'
               }`}>
-                🗓 {formatDate(task.dueDate)}{overdue && ' · Overdue'}
+                <i className="fa-regular fa-calendar !text-[9.5px]" />
+                {formatPillDate(task.dueDate)}{overdue && ' · Overdue'}
               </span>
             )}
           </div>
@@ -227,29 +237,41 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
                   onChange={e => setTitleDraft(e.target.value)}
                   onBlur={saveTitle}
                   onKeyDown={e => e.key === 'Enter' && saveTitle()}
-                  className="w-full text-xl font-bold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="field-input !py-1.5 font-display text-xl font-bold w-full"
                 />
               ) : (
                 <h2
                   onClick={() => setEditingTitle(true)}
-                  className="text-xl font-bold text-gray-900 dark:text-white cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-2 py-1 -mx-2"
+                  className="font-display text-xl font-bold text-[var(--text)] cursor-pointer hover:bg-[var(--surface-2)] rounded-lg px-2 py-1 -mx-2 transition-colors"
+                  title="Click to edit title"
                 >
                   {task.title}
                 </h2>
               )}
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-700 dark:hover:text-white text-2xl leading-none shrink-0">×</button>
+            <button onClick={onClose} className="modal-ghost-btn shrink-0" aria-label="Close"><i className="fa-solid fa-xmark" /></button>
           </div>
 
           {/* Quick actions row */}
           <div className="flex flex-wrap gap-2 mt-3">
+            {/* Start date */}
+            <div className="relative">
+              <input
+                type="date"
+                value={startDateDraft}
+                onChange={e => saveStartDate(e.target.value)}
+                className="card-meta-select !w-auto !text-xs cursor-pointer"
+                title="Set start date"
+              />
+            </div>
             {/* Due date */}
             <div className="relative">
               <input
                 type="datetime-local"
                 value={dueDateDraft}
                 onChange={e => saveDueDate(e.target.value)}
-                className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                className="card-meta-select !w-auto !text-xs cursor-pointer"
+                min={startDateDraft ? `${startDateDraft}T00:00` : undefined}
                 title="Set due date"
               />
             </div>
@@ -258,17 +280,17 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
             <div className="relative">
               <button
                 onClick={() => { setShowLabelPicker(p => !p); setShowCoverPicker(false); }}
-                className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600"
+                className="card-meta-select !w-auto !text-xs"
               >
-                🏷 Label
+                <i className="fa-solid fa-tag !text-[10px] mr-1" /> Label
               </button>
               {showLabelPicker && (
-                <div className="absolute top-8 left-0 z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl p-3 flex flex-wrap gap-2 w-48">
+                <div className="absolute top-9 left-0 z-10 modal-surface !rounded-xl p-3 flex flex-wrap gap-2 w-48 animate-scale-in">
                   {LABEL_COLORS.map(l => (
                     <button
-                      key={l.value}
+                      key={l.value || 'none'}
                       onClick={() => { patchTask({ labelColor: l.value }); setShowLabelPicker(false); }}
-                      className={`${l.bg} w-8 h-8 rounded-full border-2 ${task.labelColor === l.value ? 'border-blue-500' : 'border-transparent'}`}
+                      className={`${l.bg} w-7 h-7 rounded-full border-2 transition hover:scale-110 ${task.labelColor === l.value ? 'border-[var(--accent)]' : 'border-transparent'}`}
                       title={l.name}
                     />
                   ))}
@@ -280,17 +302,17 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
             <div className="relative">
               <button
                 onClick={() => { setShowCoverPicker(p => !p); setShowLabelPicker(false); }}
-                className="text-xs px-2 py-1 rounded bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600"
+                className="card-meta-select !w-auto !text-xs"
               >
-                🎨 Cover
+                <i className="fa-solid fa-palette !text-[10px] mr-1" /> Cover
               </button>
               {showCoverPicker && (
-                <div className="absolute top-8 left-0 z-10 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl p-3 flex flex-wrap gap-2 w-48">
+                <div className="absolute top-9 left-0 z-10 modal-surface !rounded-xl p-3 flex flex-wrap gap-2 w-48 animate-scale-in">
                   {COVER_COLORS.map(c => (
                     <button
-                      key={c.value}
+                      key={c.value || 'none'}
                       onClick={() => { patchTask({ coverColor: c.value }); setShowCoverPicker(false); }}
-                      className={`${c.value || 'bg-gray-200 dark:bg-gray-600'} w-8 h-8 rounded border-2 ${task.coverColor === c.value ? 'border-blue-500' : 'border-transparent'}`}
+                      className={`${c.value || c.swatch} w-7 h-7 rounded border-2 transition hover:scale-110 ${task.coverColor === c.value ? 'border-[var(--accent)]' : 'border-transparent'}`}
                       title={c.label}
                     />
                   ))}
@@ -300,16 +322,18 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
 
             <button
               onClick={handleDeleteTask}
-              className="text-xs px-2 py-1 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 ml-auto"
+              className="card-meta-select !w-auto !text-xs !text-[var(--danger)] ml-auto hover:!border-[var(--danger)]"
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--danger-soft)'}
+              onMouseLeave={e => e.currentTarget.style.background = ''}
             >
-              🗑 Delete
+              <i className="fa-regular fa-trash-can !text-[10px] mr-1" /> Delete
             </button>
           </div>
         </div>
 
         {/* Description */}
         <div className="px-5 pb-3">
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Description</p>
+          <p className="section-label !mb-1.5">Description</p>
           {editingDesc ? (
             <div>
               <textarea
@@ -317,44 +341,44 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
                 value={descDraft}
                 onChange={e => setDescDraft(e.target.value)}
                 rows={3}
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                className="field-input resize-none text-sm"
               />
-              <div className="flex gap-2 mt-1">
-                <button onClick={saveDesc} className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
-                <button onClick={() => setEditingDesc(false)} className="text-xs px-3 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-white rounded">Cancel</button>
+              <div className="flex gap-2 mt-1.5">
+                <button onClick={saveDesc} className="btn btn-primary !py-1.5 !px-3 !text-xs"><i className="fa-solid fa-check !text-[10px]" /> Save</button>
+                <button onClick={() => setEditingDesc(false)} className="btn btn-ghost !py-1.5 !px-3 !text-xs">Cancel</button>
               </div>
             </div>
           ) : (
             <div
               onClick={() => setEditingDesc(true)}
-              className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 rounded px-2 py-2 -mx-2 min-h-[36px]"
+              className="text-sm text-[var(--text)] cursor-pointer hover:bg-[var(--surface-2)] rounded-lg px-2 py-2 -mx-2 min-h-[36px] transition-colors"
             >
-              {task.description || <span className="text-gray-400 italic">Add a description…</span>}
+              {task.description || <span className="text-[var(--text-faint)] italic flex items-center gap-1.5 select-none"><i className="fa-regular fa-pen-to-square text-xs" /> Add a description…</span>}
             </div>
           )}
         </div>
 
-        <div className="task-details-rail mx-5 mb-4 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-          <div className="flex items-center justify-between mb-3"><h3 className="text-sm font-semibold text-gray-900 dark:text-white">Details</h3><span className="text-xs text-gray-400">Edit fields</span></div>
+        <div className="task-details-rail mx-5 mb-4 rounded-xl border border-[var(--border)] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-[var(--text)]">Details</h3>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--text-faint)]">Edit fields</span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <label className="text-xs text-gray-500 dark:text-gray-400">Status<select value={task.status} onChange={e => patchTask({ status: e.target.value })} className="detail-select"><option value="TODO">To Do</option><option value="IN_PROGRESS">In Progress</option><option value="REVIEW">Review</option><option value="DONE">Done</option></select></label>
-            <label className="text-xs text-gray-500 dark:text-gray-400">Priority<select value={task.priority} onChange={e => patchTask({ priority: e.target.value })} className="detail-select"><option value="URGENT">Urgent</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option></select></label>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Assignee<div className="detail-value">{task.assignee?.fullName || task.assignee?.email || 'Unassigned'}</div></div>
+            <label className="text-xs text-[var(--text-muted)] font-medium">Status<select value={task.status} onChange={e => patchTask({ status: e.target.value })} className="detail-select field-select appearance-none pr-8"><option value="TODO">To Do</option><option value="IN_PROGRESS">In Progress</option><option value="REVIEW">Review</option><option value="DONE">Done</option></select></label>
+            <label className="text-xs text-[var(--text-muted)] font-medium">Priority<select value={task.priority} onChange={e => patchTask({ priority: e.target.value })} className="detail-select field-select appearance-none pr-8"><option value="URGENT">Urgent</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option></select></label>
+            <div className="text-xs text-[var(--text-muted)] font-medium">Assignee<div className="detail-value"><i className="fa-regular fa-user !text-[11px] text-[var(--text-faint)] mr-1.5" />{task.assignee?.fullName || task.assignee?.email || 'Unassigned'}</div></div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="px-5 border-b border-gray-200 dark:border-gray-700 flex gap-1">
+        <div className="px-5 border-b border-[var(--border)] flex gap-1">
           {tabs.map(t => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
-              className={`text-sm px-3 py-2 border-b-2 transition ${
-                activeTab === t.id
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-medium'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-              }`}
+              className={`detail-tab ${activeTab === t.id ? 'active' : ''}`}
             >
+              <i className={t.icon} />
               {t.label}
             </button>
           ))}
@@ -363,38 +387,44 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
         {/* Tab content */}
         <div className="p-5 overflow-y-auto max-h-80">
           {loading ? (
-            <div className="text-center py-8 text-gray-400">Loading…</div>
+            <div className="text-center py-8 text-[var(--text-muted)] flex flex-col items-center gap-3">
+              <i className="fa-solid fa-circle-notch fa-spin text-xl text-[var(--accent-text)]" />
+              <span className="text-sm">Loading…</span>
+            </div>
           ) : activeTab === 'checklist' ? (
             <div>
               {checklist.length > 0 && (
                 <div className="mb-3">
-                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1">
-                    <span>Progress</span><span>{checklistProgress}%</span>
+                  <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1.5 font-medium">
+                    <span>Progress</span><span className="tabular-nums">{checklistProgress}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-[var(--surface-3)] rounded-full h-2">
                     <div
-                      className={`h-2 rounded-full transition-all ${checklistProgress === 100 ? 'bg-green-500' : 'bg-blue-500'}`}
+                      className={`h-2 rounded-full transition-all ${checklistProgress === 100 ? 'bg-emerald-500' : 'bg-blue-500'}`}
                       style={{ width: `${checklistProgress}%` }}
                     />
                   </div>
                 </div>
               )}
-              <div className="space-y-2 mb-3">
+              <div className="space-y-1 mb-3">
                 {checklist.map(item => (
-                  <div key={item.id} className="flex items-center gap-3 group">
+                  <div key={item.id} className="flex items-center gap-3 group rounded-lg px-1.5 py-1 hover:bg-[var(--surface-2)] transition-colors">
                     <input
                       type="checkbox"
                       checked={item.checked}
                       onChange={() => toggleCheckItem(item.id)}
-                      className="h-4 w-4 rounded accent-blue-500 cursor-pointer"
+                      className="h-4 w-4 rounded accent-brand-500 cursor-pointer"
                     />
-                    <span className={`flex-1 text-sm ${item.checked ? 'line-through text-gray-400' : 'text-gray-800 dark:text-gray-200'}`}>
+                    <span className={`flex-1 text-sm ${item.checked ? 'line-through text-[var(--text-faint)]' : 'text-[var(--text)]'}`}>
                       {item.content}
                     </span>
                     <button
                       onClick={() => deleteCheckItem(item.id)}
-                      className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 text-xs transition"
-                    >✕</button>
+                      className="opacity-0 group-hover:opacity-100 modal-ghost-btn !w-6 !h-6 text-[var(--text-faint)] hover:!text-[var(--danger)] transition"
+                      aria-label="Delete item"
+                    >
+                      <i className="fa-solid fa-xmark !text-[10px]" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -403,9 +433,9 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
                   value={newCheckItem}
                   onChange={e => setNewCheckItem(e.target.value)}
                   placeholder="Add an item…"
-                  className="flex-1 text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="field-input !py-2 text-sm flex-1"
                 />
-                <button type="submit" className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700">Add</button>
+                <button type="submit" className="btn btn-primary !py-2 !px-4 !text-xs"><i className="fa-solid fa-plus !text-[10px]" /> Add</button>
               </form>
             </div>
           ) : activeTab === 'comments' ? (
@@ -416,67 +446,78 @@ function TaskDetailsModal({ task: initialTask, onClose, onTaskDeleted, onTaskUpd
                   onChange={e => setNewComment(e.target.value)}
                   placeholder="Write a comment…"
                   rows={2}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm"
+                  className="field-input resize-none text-sm"
                 />
-                <div className="flex justify-end mt-1">
+                <div className="flex justify-end mt-1.5">
                   <button type="submit" disabled={submitting || !newComment.trim()}
-                    className="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400">
-                    {submitting ? 'Posting…' : 'Post'}
+                    className="btn btn-primary !py-1.5 !px-4 !text-xs">
+                    {submitting ? <><i className="fa-solid fa-circle-notch fa-spin !text-[10px]" /> Posting…</> : <><i className="fa-regular fa-paper-plane !text-[10px]" /> Post</>}
                   </button>
                 </div>
               </form>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {comments.map(c => (
-                  <div key={c.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">{c.authorName}</span>
-                      <span className="text-xs text-gray-400">{new Date(c.createdAt).toLocaleString()}</span>
+                  <div key={c.id} className="bg-[var(--surface-2)] rounded-xl p-3.5 border border-[var(--border)]">
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-sm font-semibold text-[var(--text)] flex items-center gap-2">
+                        <div className="avatar-bubble h-6 w-6 text-[11px] !border-0 !shadow-none"><span>{c.authorName ? c.authorName.charAt(0).toUpperCase() : 'U'}</span></div>
+                        {c.authorName}
+                      </span>
+                      <span className="text-[11px] text-[var(--text-faint)]">{new Date(c.createdAt).toLocaleString()}</span>
                     </div>
                     {editingComment === c.id ? (
                       <div>
                         <textarea value={editContent} onChange={e => setEditContent(e.target.value)}
-                          className="w-full px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500" rows={2} />
-                        <div className="flex gap-2 mt-1">
-                          <button onClick={() => setEditingComment(null)} className="text-xs text-green-600 hover:underline">Save</button>
-                          <button onClick={() => setEditingComment(null)} className="text-xs text-gray-400 hover:underline">Cancel</button>
+                          className="field-input !bg-[var(--surface)] text-sm resize-none" rows={2} />
+                        <div className="flex gap-2 mt-1.5">
+                          <button onClick={() => setEditingComment(null)} className="btn btn-primary !py-1 !px-3 !text-[11px]">Save</button>
+                          <button onClick={() => setEditingComment(null)} className="btn btn-ghost !py-1 !px-3 !text-[11px]">Cancel</button>
                         </div>
                       </div>
                     ) : (
-                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{c.content}</p>
+                      <p className="text-sm text-[var(--text)] whitespace-pre-wrap leading-relaxed pl-8">{c.content}</p>
                     )}
                   </div>
                 ))}
-                {comments.length === 0 && <p className="text-center text-gray-400 text-sm py-4">No comments yet</p>}
+                {comments.length === 0 && (
+                  <div className="text-center text-[var(--text-faint)] text-sm py-4"><i className="fa-regular fa-comment-dots text-2xl mb-2 block opacity-50" />No comments yet</div>
+                )}
               </div>
             </div>
           ) : (
             <div>
-              <label className="flex items-center justify-center w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-500 cursor-pointer transition text-sm mb-3">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                {uploadingFile ? 'Uploading…' : 'Click to upload a file'}
+              <label className="flex items-center justify-center w-full px-4 py-4 bg-[var(--surface-2)] text-[var(--text-muted)] rounded-xl border-2 border-dashed border-[var(--border-strong)] hover:border-brand-400 hover:text-[var(--accent-text)] cursor-pointer transition text-sm mb-3">
+                <i className="fa-solid fa-cloud-arrow-up mr-2.5" />
+                {uploadingFile ? <><i className="fa-solid fa-circle-notch fa-spin mr-2" /> Uploading…</> : 'Click to upload a file'}
                 <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploadingFile} />
               </label>
               <div className="space-y-2">
                 {attachments.map(att => (
-                  <div key={att.id} className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 flex justify-between items-center">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-blue-500 text-lg">📎</span>
+                  <div key={att.id} className="bg-[var(--surface-2)] rounded-xl p-3 flex justify-between items-center border border-[var(--border)]">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-[var(--accent-soft)] text-[var(--accent-text)] shrink-0">
+                        <i className="fa-solid fa-file" />
+                      </div>
                       <div className="min-w-0">
-                        <p className="text-sm text-gray-900 dark:text-white truncate">{att.fileName}</p>
-                        <p className="text-xs text-gray-400">{formatFileSize(att.fileSize)}</p>
+                        <p className="text-sm text-[var(--text)] truncate font-medium">{att.fileName}</p>
+                        <p className="text-[11px] text-[var(--text-faint)]">{formatFileSize(att.fileSize)}</p>
                       </div>
                     </div>
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-1.5 shrink-0">
                       <button onClick={() => handleDownload(att.fileUrl, att.fileName)}
-                        className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700">↓</button>
+                        className="btn btn-primary !py-1.5 !px-2.5 !text-xs" title="Download" aria-label="Download">
+                        <i className="fa-solid fa-download !text-[10px]" />
+                      </button>
                       <button onClick={() => handleDeleteAttachment(att.id)}
-                        className="text-xs px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700">✕</button>
+                        className="btn btn-ghost !py-1.5 !px-2.5 !text-xs !text-[var(--danger)]" title="Delete" aria-label="Delete">
+                        <i className="fa-solid fa-xmark !text-[10px]" />
+                      </button>
                     </div>
                   </div>
                 ))}
-                {attachments.length === 0 && <p className="text-center text-gray-400 text-sm py-4">No files attached</p>}
+                {attachments.length === 0 && (
+                  <div className="text-center text-[var(--text-faint)] text-sm py-4"><i className="fa-regular fa-folder-open text-2xl mb-2 block opacity-50" />No files attached</div>
+                )}
               </div>
             </div>
           )}

@@ -6,6 +6,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -39,6 +40,9 @@ public class Task {
 
     @Column(name = "due_date")
     private LocalDateTime dueDate;
+
+    @Column(name = "start_date")
+    private LocalDate startDate;
 
     @Column(name = "label_color", length = 20)
     private String labelColor;

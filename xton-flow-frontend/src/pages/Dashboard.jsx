@@ -4,7 +4,6 @@ import BoardView from './BoardView';
 import WebSocketService from '../services/WebSocketService';
 import { authFetch, clearAuthState } from '../utils/authFetch';
 import { getStoredUser, persistStoredUser } from '../utils/authStorage';
-import { useTheme } from '../utils/ThemeContext';
 
 function Dashboard() {
   const [boards, setBoards] = useState([]);
@@ -46,8 +45,6 @@ function Dashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
-
-  const { theme, toggle: toggleTheme } = useTheme();
 
   const [storedUser, setStoredUser] = useState(getStoredUser);
   const [currentUser, setCurrentUser] = useState(null);
@@ -432,37 +429,31 @@ function Dashboard() {
     <>
       <div className="workspace-brand flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          {displayUser?.avatarPath ? (
-            <img
-              src={`/api/users/avatar/${displayUser.userId}`}
-              alt={displayUser.fullName || displayUser.email}
-              className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-semibold">
-              {displayUser?.fullName ? displayUser.fullName.charAt(0).toUpperCase() : displayUser?.email?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-          )}
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">XtonFlow</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-xs mt-0.5 truncate max-w-[160px]">{activeOrg?.orgName || 'Workspace'}</p>
+          <div className="workspace-logo-mark relative">
+            {displayUser?.avatarPath ? (
+              <img src={`/api/users/avatar/${displayUser.userId}`} alt="" className="absolute inset-0 h-full w-full object-cover rounded-[12px]" />
+            ) : (
+              <img src="/favicon.svg" alt="" className="h-5 w-5 object-contain" onError={(e) => { e.currentTarget.outerHTML = '<i class="fa-solid fa-bolt"></i>'; }} />
+            )}
+          </div>
+          <div className="min-w-0">
+            <h1 className="font-display text-base font-bold text-[var(--text)] leading-tight">XtonFlow</h1>
+            <p className="text-[var(--text-muted)] text-xs mt-0.5 truncate max-w-[150px]">{activeOrg?.orgName || 'Workspace'}</p>
           </div>
         </div>
-        <button onClick={() => setSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-gray-700 dark:hover:text-white">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+        <button onClick={() => setSidebarOpen(false)} className="md:hidden modal-ghost-btn" aria-label="Close menu">
+          <i className="fa-solid fa-xmark" />
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4">
         {storedUser?.organisations?.length > 1 && (
-          <div className="mb-3">
+          <div className="mb-4">
             <label className="section-label">Workspace</label>
             <select
               value={storedUser?.activeOrgId || ''}
               onChange={(e) => handleOrgSwitch(e.target.value)}
-              className="w-full rounded border border-gray-200 bg-gray-50 px-2 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+              className="field-input field-select !py-2 !text-[13px]"
             >
               {storedUser.organisations.map(org => (
                 <option key={org.orgId} value={org.orgId}>{org.orgName}</option>
@@ -471,107 +462,95 @@ function Dashboard() {
           </div>
         )}
 
-        <div className="workspace-nav mb-4">
-          <button className={`workspace-nav-item ${activeNav === 'for-you' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('for-you')}><span>⌂</span> For you</button>
-          <button className={`workspace-nav-item ${activeNav === 'recent' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('recent')}><span>◷</span> Recent</button>
-          <button className={`workspace-nav-item ${activeNav === 'starred' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('starred')}><span>★</span> Starred</button>
-          <button className={`workspace-nav-item ${activeNav === 'spaces' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('spaces')}><span>▦</span> Spaces</button>
+        <div className="workspace-nav mb-5">
+          <button className={`workspace-nav-item ${activeNav === 'for-you' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('for-you')}><i className="fa-solid fa-house" /> For you</button>
+          <button className={`workspace-nav-item ${activeNav === 'recent' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('recent')}><i className="fa-solid fa-clock-rotate-left" /> Recent</button>
+          <button className={`workspace-nav-item ${activeNav === 'starred' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('starred')}><i className="fa-solid fa-star" /> Starred</button>
+          <button className={`workspace-nav-item ${activeNav === 'spaces' ? 'active' : ''}`} type="button" onClick={() => setActiveNav('spaces')}><i className="fa-solid fa-table-cells-large" /> Spaces</button>
         </div>
 
-        <div className="flex justify-between items-center mb-3 px-2">
+        <div className="flex justify-between items-center mb-2.5 px-2">
           <h2 className="section-label mb-0">Boards</h2>
-          <div className="flex items-center gap-2">
-            <button onClick={() => { setShowCreateModal(true); setSidebarOpen(false); }} className="text-purple-600 hover:text-purple-500 transition">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
+          <button onClick={() => { setShowCreateModal(true); setSidebarOpen(false); }} className="modal-ghost-btn !text-[var(--accent-text)] hover:!bg-[var(--accent-soft)]" aria-label="Create a new space">
+            <i className="fa-solid fa-plus text-xs" />
+          </button>
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {visibleBoards.map(board => (
             <div key={board.id} className="space-row-wrap">
-              <button onClick={() => handleBoardSelect(board)} className={`workspace-nav-item w-full text-left ${selectedBoard?.id === board.id && !showNotificationsPanel ? 'active' : ''}`}>
-                <span className="truncate flex-1">{board.name}</span><span onClick={(event) => { event.stopPropagation(); toggleStarredBoard(board.id); }} className={`board-star ${starredBoards.includes(board.id) ? 'is-starred' : ''}`} title={starredBoards.includes(board.id) ? 'Remove from starred' : 'Add to starred'}>★</span>
+              <button onClick={() => handleBoardSelect(board)} className={`workspace-nav-item ${selectedBoard?.id === board.id && !showNotificationsPanel ? 'active' : ''}`}>
+                <i className="fa-regular fa-rectangle-list shrink-0" />
+                <span className="truncate flex-1">{board.name}</span>
+                <span onClick={(event) => { event.stopPropagation(); toggleStarredBoard(board.id); }} className={`board-star ${starredBoards.includes(board.id) ? 'is-starred' : ''}`} title={starredBoards.includes(board.id) ? 'Remove from starred' : 'Add to starred'}>
+                  <i className={starredBoards.includes(board.id) ? 'fa-solid fa-star text-[11px]' : 'fa-regular fa-star text-[11px]'} />
+                </span>
               </button>
               <button type="button" className="space-row-menu-trigger" onClick={(event) => {
                 const rect = event.currentTarget.getBoundingClientRect();
                 setSpaceMenuPosition({ top: Math.min(rect.bottom + 6, window.innerHeight - 480), left: Math.min(rect.right + 8, window.innerWidth - 296) });
                 setOpenSpaceMenuId(current => current === board.id ? null : board.id);
-              }} aria-label={`Actions for ${board.name}`}>•••</button>
+              }} aria-label={`Actions for ${board.name}`}>
+                <i className="fa-solid fa-ellipsis text-xs" />
+              </button>
               {openSpaceMenuId === board.id && <div className="space-row-menu" style={{ top: spaceMenuPosition.top, left: spaceMenuPosition.left }}>
-                <button type="button" onClick={() => toggleStarredBoard(board.id)}>☆ {starredBoards.includes(board.id) ? 'Remove from starred' : 'Add to starred'}</button>
-                <button type="button" onClick={() => { setShareBoardId(board.id); setShowShareModal(true); setOpenSpaceMenuId(null); }}>♧ Add people</button>
+                <button type="button" onClick={() => toggleStarredBoard(board.id)}>
+                  <i className={starredBoards.includes(board.id) ? 'fa-solid fa-star' : 'fa-regular fa-star'} />
+                  {starredBoards.includes(board.id) ? 'Remove from starred' : 'Add to starred'}
+                </button>
+                <button type="button" onClick={() => { setShareBoardId(board.id); setShowShareModal(true); setOpenSpaceMenuId(null); }}>
+                  <i className="fa-solid fa-user-plus" /> Add people
+                </button>
                 <div className="space-row-menu-divider" />
-                <button type="button" className="danger" onClick={() => { setShowDeleteConfirm(true); setOpenSpaceMenuId(null); }}>▢ Delete space</button>
-                <div className="space-row-menu-footer"><strong>Workspace space</strong><span>Team-managed</span></div>
+                <button type="button" className="danger" onClick={() => { setShowDeleteConfirm(true); setOpenSpaceMenuId(null); }}>
+                  <i className="fa-regular fa-trash-can" /> Delete space
+                </button>
+                <div className="space-row-menu-footer"><strong className="font-semibold">Workspace space</strong><span>Team-managed</span></div>
               </div>}
             </div>
           ))}
-          {visibleBoards.length === 0 && <p className="px-2 py-4 text-xs text-gray-500">No spaces here yet.</p>}
+          {visibleBoards.length === 0 && (
+            <p className="px-2 py-4 text-xs text-[var(--text-faint)] flex items-center gap-2">
+              <i className="fa-regular fa-folder-open" /> No spaces here yet.
+            </p>
+          )}
         </div>
 
       </div>
 
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
-        <button
-          onClick={() => { setShowProfileModal(true); setSidebarOpen(false); }}
-          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm"
-        >
-          Profile
+      <div className="p-3 border-t border-[var(--border)] space-y-0.5">
+        <button onClick={() => { setShowProfileModal(true); setSidebarOpen(false); }} className="sidebar-action-btn">
+          <i className="fa-regular fa-user" /> Profile
         </button>
-        <button
-          onClick={() => { setShowMembersModal(true); setSidebarOpen(false); loadOrgMembers(); }}
-          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm"
-        >
-          Members & Roles
+        <button onClick={() => { setShowMembersModal(true); setSidebarOpen(false); loadOrgMembers(); }} className="sidebar-action-btn">
+          <i className="fa-solid fa-users-gear" /> Members & Roles
         </button>
-        <button
-          onClick={() => { setShowInviteModal(true); setSidebarOpen(false); }}
-          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm"
-        >
-          Invite to Workspace
+        <button onClick={() => { setShowInviteModal(true); setSidebarOpen(false); }} className="sidebar-action-btn">
+          <i className="fa-solid fa-paper-plane" /> Invite to Workspace
         </button>
-        <button
-          onClick={handleNotificationsOpen}
-          className={`w-full flex justify-between items-center px-3 py-2 rounded transition text-sm ${
-            showNotificationsPanel
-              ? 'bg-gradient-to-r from-purple-500 to-blue-500 text-white'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600'
-          }`}
-        >
-          <span>Notifications</span>
+        <button onClick={handleNotificationsOpen} className={`sidebar-action-btn ${showNotificationsPanel ? 'is-active' : ''}`}>
+          <i className="fa-regular fa-bell" />
+          <span className="flex-1">Notifications</span>
           {unreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            <span className="inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 rounded-full bg-[var(--danger)] text-white text-[10px] font-bold">
               {unreadCount}
             </span>
           )}
         </button>
-        <button
-          onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm"
-        >
-          <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
-          <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-        </button>
-        <button
-          onClick={handleLogout}
-          className="w-full px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm"
-        >
-          Logout
+        <button onClick={handleLogout} className="sidebar-action-btn danger !text-[var(--danger)]">
+          <i className="fa-solid fa-arrow-right-from-bracket" /> Logout
         </button>
       </div>
     </>
   );
 
   return (
-    <div className="flex h-screen bg-white dark:bg-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-[var(--bg)] overflow-hidden">
 
         {/* Mobile overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-60 z-20 md:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-20 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -579,7 +558,7 @@ function Dashboard() {
       {/* Sidebar — drawer on mobile, static on md+ */}
       <aside className={`
         fixed md:static inset-y-0 left-0 z-30
-        w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col
+        w-64 sidebar-shell flex flex-col
         transform transition-transform duration-200
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         md:translate-x-0
@@ -591,110 +570,112 @@ function Dashboard() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <button onClick={() => setSidebarOpen(true)} className="text-gray-300 hover:text-white">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-[var(--surface)] border-b border-[var(--border)]">
+          <button onClick={() => setSidebarOpen(true)} className="modal-ghost-btn">
+            <i className="fa-solid fa-bars" />
           </button>
-          <span className="text-gray-900 dark:text-white font-semibold text-sm truncate flex-1">
+          <span className="text-[var(--text)] font-semibold text-sm truncate flex-1">
             {showNotificationsPanel ? 'Notifications' : selectedBoard?.name ?? 'XtonFlow'}
           </span>
-          <button onClick={handleNotificationsOpen} className="relative text-gray-500 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                {unreadCount}
-              </span>
-            )}
+          <button onClick={handleNotificationsOpen} className="toolbar-icon !w-9 !h-9">
+            <i className="fa-regular fa-bell" />
+            {unreadCount > 0 && <b>{unreadCount}</b>}
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-purple-100 border border-gray-200 dark:border-gray-700">
-              {displayUser?.avatarPath ? (
-                <img src={`/api/users/avatar/${displayUser.userId}`} alt={displayUser.fullName || displayUser.email} className="w-full h-full object-cover" />
-              ) : (
-                <span className="flex items-center justify-center h-full text-sm font-semibold text-purple-700">
-                  {displayUser?.fullName ? displayUser.fullName.charAt(0).toUpperCase() : displayUser?.email?.charAt(0)?.toUpperCase() || 'U'}
-                </span>
-              )}
-            </div>
+          <div className="avatar-bubble h-8 w-8 text-sm">
+            {displayUser?.avatarPath ? (
+              <img src={`/api/users/avatar/${displayUser.userId}`} alt={displayUser.fullName || displayUser.email} className="w-full h-full object-cover" />
+            ) : (
+              <span>{displayUser?.fullName ? displayUser.fullName.charAt(0).toUpperCase() : displayUser?.email?.charAt(0)?.toUpperCase() || 'U'}</span>
+            )}
           </div>
         </div>
 
         <main className="flex-1 overflow-hidden">
-          <div className="hidden md:flex items-center justify-between gap-4 px-6 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+          <div className="hidden md:flex items-center justify-between gap-4 px-6 py-3 bg-[var(--surface)] border-b border-[var(--border)]">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <span className="text-gray-400">Spaces</span><span>/</span>
-                <span className="font-semibold text-gray-900 dark:text-white truncate">{selectedBoard?.name || 'Workspace'}</span>
+              {showNotificationsPanel && (
+                <button onClick={() => setShowNotificationsPanel(false)} className="modal-ghost-btn" aria-label="Back to workspace">
+                  <i className="fa-solid fa-arrow-left text-xs" />
+                </button>
+              )}
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)] min-w-0">
+                <span className="text-[var(--text-faint)]">Spaces</span><span className="text-[var(--text-faint)]">/</span>
+                <span className="font-semibold text-[var(--text)] truncate">{showNotificationsPanel ? 'Notifications' : selectedBoard?.name || 'Workspace'}</span>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <label className="dashboard-search">
-                <span>⌕</span>
+                <i className="fa-solid fa-magnifying-glass" />
                 <input aria-label="Search workspace" placeholder="Search workspace" />
               </label>
-              <button onClick={() => setShowCreateModal(true)} className="dashboard-create">＋ Create</button>
-              <button onClick={handleNotificationsOpen} className="toolbar-icon" aria-label="Open notifications">♧{unreadCount > 0 && <b>{unreadCount}</b>}</button>
-              <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100">
+              <button onClick={() => setShowCreateModal(true)} className="dashboard-create"><i className="fa-solid fa-plus text-xs" /> Create</button>
+              <button onClick={handleNotificationsOpen} className="toolbar-icon" aria-label="Open notifications">
+                <i className="fa-regular fa-bell" />
+                {unreadCount > 0 && <b>{unreadCount}</b>}
+              </button>
+              <div className="avatar-bubble h-9 w-9 text-sm">
                 {displayUser?.avatarPath ? (
                   <img src={`/api/users/avatar/${displayUser.userId}`} alt={displayUser.fullName || displayUser.email} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-sm font-semibold text-purple-700 bg-purple-100">
-                    {displayUser?.fullName ? displayUser.fullName.charAt(0).toUpperCase() : displayUser?.email?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
+                  <span>{displayUser?.fullName ? displayUser.fullName.charAt(0).toUpperCase() : displayUser?.email?.charAt(0)?.toUpperCase() || 'U'}</span>
                 )}
               </div>
             </div>
           </div>
           {showNotificationsPanel ? (
-            <div className="h-full overflow-y-auto p-4 md:p-6">
-              <div className="max-w-2xl mx-auto">
+            <div className="h-full overflow-y-auto p-4 md:p-6 board-workspace-bg">
+              <div className="max-w-2xl mx-auto animate-slide-up">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Notifications</h2>
-                  <button onClick={markAllAsRead} className="text-purple-600 dark:text-purple-400 text-sm hover:underline">
-                    Mark all as read
+                  <h2 className="font-display text-xl font-bold text-[var(--text)]">Notifications</h2>
+                  <button onClick={markAllAsRead} className="btn btn-text !text-[var(--accent-text)] hover:!bg-[var(--accent-soft)] !text-xs !font-semibold">
+                    <i className="fa-solid fa-check-double" /> Mark all as read
                   </button>
                 </div>
                 {notifications.length === 0 ? (
-                  <div className="text-center py-16 text-gray-400">No notifications yet</div>
+                  <div className="surface-card text-center py-16 text-[var(--text-muted)]">
+                    <div className="flex flex-col items-center gap-3">
+                      <i className="fa-regular fa-bell-slash text-3xl text-[var(--text-faint)]" />
+                      <p className="text-sm">No notifications yet</p>
+                    </div>
+                  </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     {notifications.map(n => (
-                      <div key={n.id} className={`rounded-lg p-4 flex justify-between items-start gap-4 ${
+                      <div key={n.id} className={`rounded-xl p-4 flex justify-between items-start gap-4 animate-fade-in ${
                         n.status === 'UNREAD'
-                          ? 'bg-purple-50 dark:bg-gray-700 border border-purple-200 dark:border-purple-500/30'
-                          : 'bg-white dark:bg-gray-800 border border-gray-100 dark:border-transparent'
+                          ? 'bg-[var(--accent-soft)] border border-[rgba(130,114,255,.28)]'
+                          : 'surface-card'
                       }`}>
                         <div className="min-w-0">
-                          <p className="text-gray-900 dark:text-white text-sm font-medium">{n.message}</p>
-                          {n.senderName && <p className="text-gray-500 dark:text-gray-400 text-xs mt-1">From: {n.senderName}</p>}
-                          <p className="text-gray-400 dark:text-gray-500 text-xs mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                          <div className="flex items-start gap-2.5">
+                            <i className={`fa-solid ${n.type === 'REQUEST' ? 'fa-user-plus' : 'fa-bell'} mt-1 text-xs ${n.status === 'UNREAD' ? 'text-[var(--accent-text)]' : 'text-[var(--text-faint)]'}`} />
+                            <p className="text-[var(--text)] text-sm font-medium leading-snug">{n.message}</p>
+                          </div>
+                          {n.senderName && <p className="text-[var(--text-muted)] text-xs mt-1.5 pl-[22px]">From: {n.senderName}</p>}
+                          <p className="text-[var(--text-faint)] text-[11px] mt-1 pl-[22px]">{new Date(n.createdAt).toLocaleString()}</p>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-col items-end gap-2 shrink-0">
                           {n.type === 'REQUEST' && n.status === 'UNREAD' ? (
                             <div className="flex gap-2">
                               <button
                                 type="button"
                                 onClick={() => handleNotificationAction(n.id, 'accept')}
-                                className="shrink-0 text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700"
+                                className="btn btn-primary !py-1.5 !px-3 !text-xs !rounded-lg"
                               >
-                                Accept
+                                <i className="fa-solid fa-check" /> Accept
                               </button>
                               <button
                                 type="button"
                                 onClick={() => handleNotificationAction(n.id, 'decline')}
-                                className="shrink-0 text-xs bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
+                                className="btn btn-ghost !py-1.5 !px-3 !text-xs !rounded-lg !text-[var(--danger)]"
                               >
-                                Decline
+                                <i className="fa-solid fa-xmark" /> Decline
                               </button>
                             </div>
                           ) : n.status === 'UNREAD' ? (
                             <button
                               onClick={() => markAsRead(n.id)}
-                              className="shrink-0 text-xs bg-gradient-to-r from-purple-600 to-blue-600 text-white px-2 py-1 rounded hover:from-purple-700 hover:to-blue-700"
+                              className="btn btn-primary !py-1.5 !px-3 !text-xs !rounded-lg"
                             >
                               Mark read
                             </button>
@@ -709,43 +690,52 @@ function Dashboard() {
           ) : selectedBoard ? (
             <BoardView boardId={selectedBoard.id} boardName={selectedBoard.name} onShare={() => setShowShareModal(true)} />
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-gray-400 text-sm">Select a board to view tasks</div>
+            <div className="flex items-center justify-center h-full board-workspace-bg">
+              <div className="text-center text-[var(--text-muted)]">
+                <i className="fa-regular fa-folder-open text-4xl text-[var(--text-faint)] mb-3 block" />
+                <p className="text-sm">Select a board to view tasks</p>
+              </div>
             </div>
           )}
         </main>
       </div>
 
       {showProfileModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Edit Profile</h2>
+        <div className="overlay">
+          <div className="modal-surface p-6 w-full max-w-md animate-scale-in">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h2 className="font-display text-xl font-bold text-[var(--text)]">Edit Profile</h2>
+                <p className="text-[var(--text-muted)] text-xs mt-0.5">Update your personal details</p>
+              </div>
+              <button type="button" onClick={() => setShowProfileModal(false)} className="modal-ghost-btn" aria-label="Close"><i className="fa-solid fa-xmark" /></button>
+            </div>
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Full name</label>
+                <label className="field-label">Full name</label>
                 <input
                   type="text"
                   value={profileForm.fullName}
                   onChange={(e) => setProfileForm({ ...profileForm, fullName: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded"
+                  className="field-input"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Birthday</label>
+                <label className="field-label">Birthday</label>
                 <input
                   type="date"
                   value={profileForm.birthday || ''}
                   onChange={(e) => setProfileForm({ ...profileForm, birthday: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded"
+                  className="field-input"
                 />
               </div>
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Gender</label>
+                <label className="field-label">Gender</label>
                 <select
                   value={profileForm.gender}
                   onChange={(e) => setProfileForm({ ...profileForm, gender: e.target.value })}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded"
+                  className="field-input field-select"
                 >
                   <option value="MALE">Male</option>
                   <option value="FEMALE">Female</option>
@@ -754,12 +744,14 @@ function Dashboard() {
                 </select>
               </div>
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Profile picture</label>
-                <input type="file" accept="image/*" onChange={handleAvatarUpload} className="w-full text-sm text-gray-600 dark:text-gray-300" />
+                <label className="field-label">Profile picture</label>
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} className="field-input !bg-transparent file:mr-3 file:btn-primary file:!py-1.5 file:!px-3 file:!text-xs file:!rounded-lg file:border-0 file:cursor-pointer" />
               </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowProfileModal(false)} className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded">Cancel</button>
-                <button type="submit" disabled={profileSaving} className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded disabled:opacity-60">{profileSaving ? 'Saving...' : 'Save'}</button>
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setShowProfileModal(false)} className="btn btn-ghost flex-1">Cancel</button>
+                <button type="submit" disabled={profileSaving} className="btn btn-primary flex-1">
+                  {profileSaving ? <><i className="fa-solid fa-circle-notch fa-spin" /> Saving…</> : 'Save'}
+                </button>
               </div>
             </form>
           </div>
@@ -767,24 +759,32 @@ function Dashboard() {
       )}
 
       {showMembersModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-lg max-h-[80vh] overflow-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Workspace Members</h2>
-              <button onClick={() => setShowMembersModal(false)} className="text-gray-500">✕</button>
+        <div className="overlay">
+          <div className="modal-surface p-6 w-full max-w-lg max-h-[80vh] overflow-auto animate-scale-in">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h2 className="font-display text-xl font-bold text-[var(--text)]">Workspace Members</h2>
+                <p className="text-[var(--text-muted)] text-xs mt-0.5">Manage roles for people in this workspace</p>
+              </div>
+              <button type="button" onClick={() => setShowMembersModal(false)} className="modal-ghost-btn" aria-label="Close"><i className="fa-solid fa-xmark" /></button>
             </div>
-            {membersLoading ? <p className="text-sm text-gray-500">Loading members...</p> : (
-              <div className="space-y-3">
+            {membersLoading ? <p className="text-sm text-[var(--text-muted)] flex items-center gap-2"><i className="fa-solid fa-circle-notch fa-spin" /> Loading members…</p> : (
+              <div className="space-y-2.5">
                 {orgMembers.map(member => (
-                  <div key={member.memberId} className="flex items-center justify-between rounded border border-gray-200 dark:border-gray-700 p-3">
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">{member.fullName}</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">{member.email}</p>
+                  <div key={member.memberId} className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="avatar-bubble h-9 w-9 text-sm">
+                        <span>{member.fullName ? member.fullName.charAt(0).toUpperCase() : 'U'}</span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-medium text-[var(--text)] text-sm truncate">{member.fullName}</p>
+                        <p className="text-xs text-[var(--text-muted)] truncate">{member.email}</p>
+                      </div>
                     </div>
                     <select
                       value={member.systemRole}
                       onChange={(e) => handleRoleChange(member.memberId, e.target.value)}
-                      className="rounded border border-gray-200 bg-gray-50 px-2 py-2 text-sm text-gray-700 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                      className="field-input field-select !w-auto !py-1.5 !text-[13px]"
                     >
                       <option value="OWNER">Owner</option>
                       <option value="ADMIN">Admin</option>
@@ -799,31 +799,43 @@ function Dashboard() {
       )}
 
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Invite to Workspace</h2>
-            {inviteStatus && <div className="mb-4 rounded bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-200">{inviteStatus}</div>}
+        <div className="overlay">
+          <div className="modal-surface p-6 w-full max-w-md animate-scale-in">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h2 className="font-display text-xl font-bold text-[var(--text)]">Invite to Workspace</h2>
+                <p className="text-[var(--text-muted)] text-xs mt-0.5">Send an email invitation to join this workspace</p>
+              </div>
+              <button type="button" onClick={() => setShowInviteModal(false)} className="modal-ghost-btn" aria-label="Close"><i className="fa-solid fa-xmark" /></button>
+            </div>
+            {inviteStatus && (
+              <div className="mb-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-3.5 py-2.5 text-sm text-[var(--text)] flex items-center gap-2">
+                <i className="fa-solid fa-circle-info text-[var(--accent-text)]" /> {inviteStatus}
+              </div>
+            )}
             <form onSubmit={handleInviteMember} className="space-y-4">
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Email address</label>
+                <label className="field-label">Email address</label>
                 <input
                   type="email"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded"
+                  className="field-input"
                   required
                 />
               </div>
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Role</label>
-                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded">
+                <label className="field-label">Role</label>
+                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="field-input field-select">
                   <option value="MEMBER">Member</option>
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setShowInviteModal(false)} className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded">Cancel</button>
-                <button type="submit" disabled={inviteSending} className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded disabled:opacity-60">{inviteSending ? 'Sending...' : 'Send Invite'}</button>
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setShowInviteModal(false)} className="btn btn-ghost flex-1">Cancel</button>
+                <button type="submit" disabled={inviteSending} className="btn btn-primary flex-1">
+                  {inviteSending ? <><i className="fa-solid fa-circle-notch fa-spin" /> Sending…</> : <><i className="fa-solid fa-paper-plane" /> Send Invite</>}
+                </button>
               </div>
             </form>
           </div>
@@ -831,91 +843,104 @@ function Dashboard() {
       )}
 
       {showDeleteConfirm && selectedBoard && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Delete board?</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">This will permanently remove the board and its task data from the workspace.</p>
-            <div className="flex gap-3">
-              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded">Cancel</button>
-              <button type="button" onClick={handleDeleteBoard} className="flex-1 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete Board</button>
+        <div className="overlay">
+          <div className="modal-surface p-6 w-full max-w-md animate-scale-in">
+            <div className="flex items-start gap-3.5 mb-2">
+              <div className="flex items-center justify-center h-11 w-11 rounded-xl bg-[var(--danger-soft)] text-[var(--danger)] shrink-0">
+                <i className="fa-regular fa-trash-can" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-bold text-[var(--text)]">Delete board?</h2>
+                <p className="text-[var(--text-muted)] text-sm mt-1">This will permanently remove <span className="font-semibold text-[var(--text)]">{selectedBoard.name}</span> and all its task data.</p>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="btn btn-ghost flex-1">Cancel</button>
+              <button type="button" onClick={handleDeleteBoard} className="btn btn-danger flex-1"><i className="fa-solid fa-trash-can" /> Delete Board</button>
             </div>
           </div>
         </div>
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="create-space-modal bg-white dark:bg-gray-800 rounded-lg w-full max-w-2xl overflow-hidden">
-            <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-5">
+        <div className="overlay">
+          <div className="create-space-modal modal-surface w-full max-w-2xl overflow-hidden">
+            <div className="border-b border-[var(--border)] px-6 py-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="section-label mb-2">Create a new space</p>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Name your space</h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Set up a focused board for work your team can move forward.</p>
+                  <p className="section-label mb-1.5">Create a new space</p>
+                  <h2 className="font-display text-2xl font-bold text-[var(--text)]">Name your space</h2>
+                  <p className="text-sm text-[var(--text-muted)] mt-1">Set up a focused board for work your team can move forward.</p>
                 </div>
-                <button type="button" onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-800 dark:hover:text-white text-xl" aria-label="Close">×</button>
+                <button type="button" onClick={() => setShowCreateModal(false)} className="modal-ghost-btn" aria-label="Close"><i className="fa-solid fa-xmark" /></button>
               </div>
-              <div className="flex items-center gap-2 mt-5 text-xs text-gray-500 dark:text-gray-400">
-                <span className={`step-dot ${createBoardStep === 1 ? 'current' : ''}`}>1</span><span>Details</span>
-                <span className="h-px w-10 bg-gray-300 dark:bg-gray-600" />
-                <span className={`step-dot ${createBoardStep === 2 ? 'current' : ''}`}>2</span><span>Configure</span>
-                <span className="h-px w-10 bg-gray-300 dark:bg-gray-600" />
-                <span className={`step-dot ${createBoardStep === 3 ? 'current' : ''}`}>3</span><span>Team</span>
+              <div className="flex items-center gap-2 mt-5 text-xs text-[var(--text-muted)]">
+                <span className={`step-dot ${createBoardStep === 1 ? 'current' : createBoardStep > 1 ? 'done' : ''}`}>{createBoardStep > 1 ? <i className="fa-solid fa-check text-[9px]" /> : '1'}</span><span className={createBoardStep === 1 ? 'font-semibold text-[var(--text)]' : ''}>Details</span>
+                <span className={`h-px w-10 ${createBoardStep > 1 ? 'bg-[var(--accent)]' : 'bg-[var(--border-strong)]'}`} />
+                <span className={`step-dot ${createBoardStep === 2 ? 'current' : createBoardStep > 2 ? 'done' : ''}`}>{createBoardStep > 2 ? <i className="fa-solid fa-check text-[9px]" /> : '2'}</span><span className={createBoardStep === 2 ? 'font-semibold text-[var(--text)]' : ''}>Configure</span>
+                <span className={`h-px w-10 ${createBoardStep > 2 ? 'bg-[var(--accent)]' : 'bg-[var(--border-strong)]'}`} />
+                <span className={`step-dot ${createBoardStep === 3 ? 'current' : ''}`}>3</span><span className={createBoardStep === 3 ? 'font-semibold text-[var(--text)]' : ''}>Team</span>
               </div>
             </div>
-            <form onSubmit={handleCreateBoard} className="space-y-4">
-              <div className="px-6 py-6 min-h-[250px]">
+            <form onSubmit={handleCreateBoard}>
+              <div className="px-6 py-6 min-h-[250px] space-y-5">
                 {createBoardStep === 1 ? (
-                  <div className="space-y-5">
+                  <div className="space-y-5 animate-fade-in">
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">Name <span className="text-red-500">*</span></label>
-                      <input type="text" value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Try a team name, project goal, milestone..." required autoFocus />
+                      <label className="field-label">Name <span className="text-[var(--danger)]">*</span></label>
+                      <input type="text" value={newBoardName} onChange={(e) => setNewBoardName(e.target.value)} className="field-input" placeholder="Try a team name, project goal, milestone..." required autoFocus />
                     </div>
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">Description</label>
-                      <textarea value={newBoardDescription} onChange={(e) => setNewBoardDescription(e.target.value)} className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="3" placeholder="What will this team work on?" />
+                      <label className="field-label">Description</label>
+                      <textarea value={newBoardDescription} onChange={(e) => setNewBoardDescription(e.target.value)} className="field-input resize-none" rows="3" placeholder="What will this team work on?" />
                     </div>
                   </div>
                 ) : createBoardStep === 2 ? (
-                  <div className="space-y-5">
+                  <div className="space-y-5 animate-fade-in">
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">How will your space be managed?</label>
-                      <select value={boardManagement} onChange={(e) => setBoardManagement(e.target.value)} className="w-full px-4 py-3 mb-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <label className="field-label">How will your space be managed?</label>
+                      <select value={boardManagement} onChange={(e) => setBoardManagement(e.target.value)} className="field-input field-select !mb-4">
                         <option value="team">Team-managed</option>
                         <option value="company">Company-managed</option>
                       </select>
                       <div className="grid grid-cols-2 gap-3">
-                        {['blank', 'delivery'].map(template => (
-                          <button key={template} type="button" onClick={() => setBoardTemplate(template)} className={`text-left rounded border p-4 transition ${boardTemplate === template ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40' : 'border-gray-200 dark:border-gray-600 hover:border-blue-300'}`}>
-                            <span className="text-lg">{template === 'blank' ? '▦' : '◈'}</span>
-                            <span className="block mt-2 text-sm font-semibold text-gray-900 dark:text-white">{template === 'blank' ? 'Blank space' : 'Delivery flow'}</span>
-                            <span className="block mt-1 text-xs text-gray-500 dark:text-gray-400">{template === 'blank' ? 'Start with a clean board' : 'Plan, review, and complete work'}</span>
+                        {[
+                          { id: 'blank', icon: 'fa-solid fa-table-cells-large', title: 'Blank space', desc: 'Start with a clean board' },
+                          { id: 'delivery', icon: 'fa-solid fa-diagram-project', title: 'Delivery flow', desc: 'Plan, review, and complete work' },
+                        ].map(template => (
+                          <button key={template.id} type="button" onClick={() => setBoardTemplate(template.id)} className={`option-card ${boardTemplate === template.id ? 'selected' : ''}`}>
+                            <span className="option-icon"><i className={template.icon} /></span>
+                            <span className="block mt-3 text-sm font-semibold text-[var(--text)]">{template.title}</span>
+                            <span className="block mt-1 text-xs text-[var(--text-muted)]">{template.desc}</span>
                           </button>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">Access <span className="text-red-500">*</span></label>
-                      <select value={newBoardVisibility} onChange={(e) => setNewBoardVisibility(e.target.value)} className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <label className="field-label">Access <span className="text-[var(--danger)]">*</span></label>
+                      <select value={newBoardVisibility} onChange={(e) => setNewBoardVisibility(e.target.value)} className="field-input field-select">
                         <option value="TEAM">Open to workspace members</option>
                         <option value="PRIVATE">Private to invited members</option>
                       </select>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-5">
+                  <div className="space-y-5 animate-fade-in">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Bring your team along</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Invite existing XtonFlow members now. You can always add more later.</p>
+                      <h3 className="font-display text-lg font-semibold text-[var(--text)]">Bring your team along</h3>
+                      <p className="text-sm text-[var(--text-muted)] mt-1">Invite existing XtonFlow members now. You can always add more later.</p>
                     </div>
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">Names or emails</label>
-                      <textarea value={inviteEmails} onChange={(e) => setInviteEmails(e.target.value)} className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="3" placeholder="alex@example.com, sam@example.com" />
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Separate multiple people with commas, spaces, or semicolons.</p>
+                      <label className="field-label">Names or emails</label>
+                      <textarea value={inviteEmails} onChange={(e) => setInviteEmails(e.target.value)} className="field-input resize-none" rows="3" placeholder="alex@example.com, sam@example.com" />
+                      <p className="text-xs text-[var(--text-faint)] mt-2 flex items-center gap-1.5">
+                        <i className="fa-solid fa-circle-question text-[10px]" />
+                        Separate multiple people with commas, spaces, or semicolons.
+                      </p>
                     </div>
                     <div>
-                      <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm font-medium">Role</label>
-                      <select value={inviteAfterCreateRole} onChange={(e) => setInviteAfterCreateRole(e.target.value)} className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded border border-gray-200 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <label className="field-label">Role</label>
+                      <select value={inviteAfterCreateRole} onChange={(e) => setInviteAfterCreateRole(e.target.value)} className="field-input field-select">
                         <option value="MEMBER">Member</option>
                         <option value="VIEWER">Viewer</option>
                         <option value="ADMIN">Administrator</option>
@@ -924,11 +949,20 @@ function Dashboard() {
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 px-6 py-4">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Step {createBoardStep} of 3</span>
+              <div className="flex items-center justify-between border-t border-[var(--border)] px-6 py-4 bg-[var(--surface-2)]">
+                <span className="text-xs text-[var(--text-muted)]">Step {createBoardStep} of 3</span>
                 <div className="flex gap-3">
-                  {createBoardStep > 1 && <button type="button" onClick={() => setCreateBoardStep(createBoardStep - 1)} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Back</button>}
-                  {createBoardStep < 3 ? <button type="button" disabled={createBoardStep === 1 && !newBoardName.trim()} onClick={() => setCreateBoardStep(createBoardStep + 1)} className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-40 text-sm font-semibold">Next</button> : <><button type="submit" className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">I'll do this later</button><button type="submit" className="px-5 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-semibold">Create space</button></>}
+                  {createBoardStep > 1 && <button type="button" onClick={() => setCreateBoardStep(createBoardStep - 1)} className="btn btn-text">Back</button>}
+                  {createBoardStep < 3 ? (
+                    <button type="button" disabled={createBoardStep === 1 && !newBoardName.trim()} onClick={() => setCreateBoardStep(createBoardStep + 1)} className="btn btn-primary !py-2 !px-5 !text-sm">
+                      Next <i className="fa-solid fa-arrow-right text-xs" />
+                    </button>
+                  ) : (
+                    <>
+                      <button type="submit" className="btn btn-text">I'll do this later</button>
+                      <button type="submit" className="btn btn-primary !py-2 !px-5 !text-sm"><i className="fa-solid fa-circle-plus" /> Create space</button>
+                    </>
+                  )}
                 </div>
               </div>
             </form>
@@ -937,21 +971,28 @@ function Dashboard() {
       )}
 
       {showShareModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Share Board</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Invite someone to collaborate on {selectedBoard?.name}.</p>
+        <div className="overlay">
+          <div className="modal-surface p-6 w-full max-w-md animate-scale-in">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h2 className="font-display text-xl font-bold text-[var(--text)]">Share Board</h2>
+                <p className="text-[var(--text-muted)] text-sm mt-0.5">Invite someone to collaborate on <span className="font-semibold text-[var(--text)]">{selectedBoard?.name}</span>.</p>
+              </div>
+              <button type="button" onClick={() => { setShowShareModal(false); setShareEmail(''); setShareRole('MEMBER'); setShareStatus(''); }} className="modal-ghost-btn" aria-label="Close"><i className="fa-solid fa-xmark" /></button>
+            </div>
 
             {shareStatus && (
-              <div className="mb-4 rounded bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-200">{shareStatus}</div>
+              <div className="mb-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-3.5 py-2.5 text-sm text-[var(--text)] flex items-center gap-2">
+                <i className="fa-solid fa-circle-info text-[var(--accent-text)]" /> {shareStatus}
+              </div>
             )}
             <form onSubmit={handleShareBoard} className="space-y-4">
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Board</label>
+                <label className="field-label">Board</label>
                 <select
                   value={shareBoardId}
                   onChange={(e) => setShareBoardId(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="field-input field-select"
                   required
                 >
                   {boards.map(board => (
@@ -961,23 +1002,26 @@ function Dashboard() {
               </div>
 
               <div className="relative">
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Collaborator Email or Name</label>
+                <label className="field-label">Collaborator Email or Name</label>
                 <input
                   type="text"
                   value={shareEmail}
                   onChange={(e) => handleSearchUsers(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="field-input"
                   placeholder="Type name or email to search"
                   required
                 />
 
                 {/* Autocomplete suggestions */}
                 {filteredUsers.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-1 z-50 bg-white dark:bg-gray-800 rounded shadow max-h-40 overflow-auto">
+                  <div className="absolute left-0 right-0 mt-1 z-50 surface-card !rounded-xl max-h-40 overflow-auto p-1.5 animate-scale-in">
                     {filteredUsers.map(u => (
-                      <button key={u.id} type="button" onClick={() => { setShareEmail(u.email); setShareStatus(`Selected ${u.fullName} <${u.email}>`); }} className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{u.fullName}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{u.email}</div>
+                      <button key={u.id} type="button" onClick={() => { setShareEmail(u.email); setShareStatus(`Selected ${u.fullName} <${u.email}>`); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--surface-2)] transition">
+                        <div className="text-sm font-medium text-[var(--text)] flex items-center gap-2">
+                          <div className="avatar-bubble h-6 w-6 text-[11px] !border-0 !shadow-none"><span>{u.fullName ? u.fullName.charAt(0).toUpperCase() : 'U'}</span></div>
+                          {u.fullName}
+                        </div>
+                        <div className="text-xs text-[var(--text-muted)] pl-8">{u.email}</div>
                       </button>
                     ))}
                   </div>
@@ -985,46 +1029,44 @@ function Dashboard() {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-gray-500 dark:text-gray-400">Search suggestions appear as you type.</span>
-                <button type="button" onClick={() => { setShowAllUsers(prev => !prev); setShareStatus(''); }} className="text-sm text-purple-600 hover:text-purple-500 transition">
+                <span className="text-xs text-[var(--text-faint)]">Search suggestions appear as you type.</span>
+                <button type="button" onClick={() => { setShowAllUsers(prev => !prev); setShareStatus(''); }} className="btn btn-text !text-[var(--accent-text)] hover:!bg-[var(--accent-soft)] !text-xs !font-semibold">
                   {showAllUsers ? 'Hide user list' : 'Show full org list'}
                 </button>
               </div>
 
               {showAllUsers && orgUsers.length > 0 && (
-                <div className="max-h-48 overflow-y-auto rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-2 space-y-2">
+                <div className="max-h-48 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-1.5 space-y-0.5 animate-fade-in">
                   {orgUsers.map(u => (
                     <button
                       key={u.id}
                       type="button"
                       onClick={() => { setShareEmail(u.email); setShareStatus(`Selected ${u.fullName} <${u.email}>`); }}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-[var(--surface-3)] transition"
                     >
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{u.fullName}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{u.email}</div>
+                      <div className="text-sm font-medium text-[var(--text)]">{u.fullName}</div>
+                      <div className="text-xs text-[var(--text-muted)]">{u.email}</div>
                     </button>
                   ))}
                 </div>
               )}
 
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 mb-2 text-sm">Role</label>
-                <select value={shareRole} onChange={(e) => setShareRole(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <label className="field-label">Role</label>
+                <select value={shareRole} onChange={(e) => setShareRole(e.target.value)} className="field-input field-select">
                   <option value="MEMBER">Member</option>
                   <option value="VIEWER">Viewer</option>
                   <option value="ADMIN">Admin</option>
                 </select>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-1">
                 <button type="button" disabled={sharingBoard}
                   onClick={() => { setShowShareModal(false); setShareEmail(''); setShareRole('MEMBER'); setShareStatus(''); }}
-                  className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition text-sm">
+                  className="btn btn-ghost flex-1">
                   Cancel
                 </button>
-                <button type="submit" disabled={sharingBoard}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded hover:from-purple-700 hover:to-blue-700 transition disabled:bg-gray-400 text-sm">
-                  {sharingBoard ? 'Sharing...' : 'Share Board'}
+                <button type="submit" disabled={sharingBoard} className="btn btn-primary flex-1">
+                  {sharingBoard ? <><i className="fa-solid fa-circle-notch fa-spin" /> Sharing…</> : <><i className="fa-solid fa-user-plus" /> Share Board</>}
                 </button>
               </div>
             </form>
