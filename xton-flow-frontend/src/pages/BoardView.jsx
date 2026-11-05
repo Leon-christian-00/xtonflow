@@ -400,7 +400,10 @@ function BoardView({ boardId, boardName, onShare }) {
                       className={`calendar-day ${day.getMonth() !== calendarMonth.getMonth() ? 'outside-month' : ''} ${isToday ? 'is-today' : ''}`}
                       aria-label={`${day.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })}, ${dayTasks.length} tasks`}
                     >
-                      <span className="calendar-day-number">{day.getDate()}</span>
+                      <div className="calendar-day-heading">
+                        <span className="calendar-day-count">{dayTasks.length ? `${dayTasks.length} tasks` : ''}</span>
+                        <span className="calendar-day-number">{day.getDate()}</span>
+                      </div>
                       <div className="calendar-day-tasks">
                         {dayTasks.map(task => (
                           <button

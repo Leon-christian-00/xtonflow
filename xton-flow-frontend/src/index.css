@@ -799,13 +799,26 @@ h1, h2, h3, .font-display {
 .calendar-day.outside-month { background: var(--surface-2); }
 .calendar-day.outside-month .calendar-day-number { color: var(--text-faint); }
 .calendar-day.is-today { background: var(--accent-soft); }
+.calendar-day-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+.calendar-day-count {
+  overflow: hidden;
+  color: var(--text-faint);
+  font-size: 9px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .calendar-day-number {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 26px;
   height: 26px;
-  margin-left: auto;
   border-radius: 50%;
   color: var(--text-muted);
   font-size: 12px;
